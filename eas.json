@@ -3,9 +3,6 @@
     "version": ">= 13.0.0",
     "appVersionSource": "remote"
   },
-  "app": {
-    "autoIncrement": true
-  },
   "build": {
     "preview": {
       "distribution": "internal",

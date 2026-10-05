@@ -41,7 +41,12 @@
       "reactCompiler": true
     },
     "extra": {
-      "apiUrl": "https://ski-shop-paqi.onrender.com"
-    }
+      "apiUrl": "https://ski-shop-paqi.onrender.com",
+      "router": {},
+      "eas": {
+        "projectId": "cfdf56fc-1426-4797-9783-a27cb98b91b6"
+      }
+    },
+    "owner": "joshuaakumav"
   }
 }
