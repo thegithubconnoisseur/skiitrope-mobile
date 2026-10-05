@@ -1,6 +1,15 @@
 import { Link } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { Product, ProductCard, useTheme } from '@/components/ui';
 import { Category, getCategories, getProducts } from '@/lib/api';
@@ -11,32 +20,40 @@ export default function HomeScreen() {
   const [featured, setFeatured] = useState<Product[] | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [products, cats] = await Promise.all([getProducts(), getCategories()]);
-        setFeatured(products.filter((p) => p.is_featured).slice(0, 6));
-        setCategories(cats);
-      } catch {
-        setError('Could not load the shop. Pull to retry.');
-      }
-    })();
+  const load = useCallback(async () => {
+    setError('');
+    try {
+      const [products, cats] = await Promise.all([getProducts(), getCategories()]);
+      setFeatured(products.filter((p) => p.is_featured).slice(0, 6));
+      setCategories(cats);
+    } catch {
+      setError('Could not load the shop. Pull to retry.');
+      setFeatured((current) => current);
+    }
   }, []);
 
-  if (error && !featured) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.textSecondary }}>{error}</Text>
-      </View>
-    );
-  }
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [load]);
 
   return (
     <ScrollView
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.content}
-      refreshControl={undefined}>
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.red} />
+      }>
       <View style={styles.hero}>
         <Text style={[styles.heroTitle, { color: colors.text }]}>{SHOP_NAME}</Text>
         <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>
@@ -60,6 +77,7 @@ export default function HomeScreen() {
       </View>
 
       <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured gear</Text>
+      {error ? <Text style={{ color: colors.textSecondary }}>{error}</Text> : null}
       {featured === null ? (
         <ActivityIndicator color={colors.red} style={{ marginVertical: 24 }} />
       ) : (
@@ -117,11 +135,5 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 8,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
   },
 });

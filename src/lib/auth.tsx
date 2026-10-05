@@ -1,4 +1,3 @@
-import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
 import {
   ReactNode,
@@ -13,6 +12,7 @@ import { Alert } from 'react-native';
 
 import { ApiError, User, loginWithEmail, logout as apiLogout } from './api';
 import { API_BASE_URL, AUTH_REDIRECT_URL } from './config';
+import { deleteItem, getItem, setItem } from './storage';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -58,8 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const storedToken = await SecureStore.getItemAsync(TOKEN_KEY);
-      const storedUser = await SecureStore.getItemAsync(USER_KEY);
+      const storedToken = await getItem(TOKEN_KEY);
+      const storedUser = await getItem(USER_KEY);
       if (storedToken) {
         setToken(storedToken);
         if (storedUser) {
@@ -75,11 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const persist = useCallback(async (newToken: string, newUser: User | null) => {
-    await SecureStore.setItemAsync(TOKEN_KEY, newToken);
+    await setItem(TOKEN_KEY, newToken);
     if (newUser) {
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(newUser));
+      await setItem(USER_KEY, JSON.stringify(newUser));
     } else {
-      await SecureStore.deleteItemAsync(USER_KEY);
+      await deleteItem(USER_KEY);
     }
     setToken(newToken);
     setUser(newUser);
@@ -118,8 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     }
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(USER_KEY);
+    await deleteItem(TOKEN_KEY);
+    await deleteItem(USER_KEY);
     setToken(null);
     setUser(null);
   }, [token]);
